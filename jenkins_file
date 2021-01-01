@@ -1,0 +1,33 @@
+pipeline {
+    agent { label 'linu_134_server' }
+
+    environment{
+        PATH = "/opt/maven3/bin:$PATH"
+    }
+    stages {
+        stage("Git Checkout") {
+            steps {
+                // Get some code from a GitHub repository
+                git 'https://github.com/ChallaHarish/angular-with-spring-boot-and-mongo.git'
+            }
+        }
+        stage("Maven Build"){
+            steps{
+                sh "mvn clean package"
+            }
+        }
+        stage ("Deploye-Dev-server") {
+             steps{
+                sshagent(['tomcat-login']) {
+                 sh """
+                     scp -o StricHostKeyChecking=no target/default-template-1.0.jar  ec2-user@172.32.5.178:/op/tomcat8/webapp/
+                     ssh ec2-user@172.32.5.178 /opt/tomcat8/bin/shutdown.sh
+                     ssh ec2-user@172.32.5.178 /opt/tomcat8/bin/startup.sh
+                 """
+
+                }
+
+            }
+        }
+    }
+}
